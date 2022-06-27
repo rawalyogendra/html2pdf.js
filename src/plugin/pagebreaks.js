@@ -124,6 +124,8 @@ Worker.prototype.toContainer = function toContainer() {
         var pad = createElement(self.opt.pagebreak.elementType || "div", {
             style: {
               display: 'block',
+              // https://github.com/eKoopmans/html2pdf.js/pull/447
+              width: '100%',
               height: pxPageHeight - (clientRect.top % pxPageHeight) + 'px'
           }, className: self.opt.pagebreak.className}); //allow control of styling of added sections
         el.parentNode.insertBefore(pad, el);
@@ -133,6 +135,8 @@ Worker.prototype.toContainer = function toContainer() {
       if (rules.after) {
         var pad = createElement('div', {style: {
           display: 'block',
+            // https://github.com/eKoopmans/html2pdf.js/pull/447
+            width: '100%',
           height: pxPageHeight - (clientRect.bottom % pxPageHeight) + 'px'
         }});
         el.parentNode.insertBefore(pad, el.nextSibling);

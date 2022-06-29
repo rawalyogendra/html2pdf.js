@@ -36,13 +36,21 @@ Worker.template.opt.pagebreak = {
   // https://github.com/eKoopmans/html2pdf.js/pull/260
   avoid: [],
   elementType: 'div',  //default element to create
-  className: ''       //by default no class
+  className: '',       //by default no class,
+  // Custom porabo
+  beforePageBreak: null
 };
 
 Worker.prototype.toContainer = function toContainer() {
   return orig.toContainer.call(this).then(function toContainer_pagebreak() {
     // Setup root element and inner page height.
     var root = this.prop.container;
+
+    // Custom porabo
+    if (!!this.opt.pagebreak.beforePageBreak) {
+      this.opt.pagebreak.beforePageBreak();
+    }
+
     // https://github.com/eKoopmans/html2pdf.js/pull/170
     var pxPageHeight = this.opt['html2canvas'] && this.opt['html2canvas']['width'] ? this.opt['html2canvas']['width'] * this.prop.pageSize.inner.ratio : this.prop.pageSize.inner.px.height;
 

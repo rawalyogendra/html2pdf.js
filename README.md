@@ -192,7 +192,11 @@ html2pdf().set({
 
 // Enable all 'modes', with no explicit elements.
 html2pdf().set({
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'], elementType: 'tr', className: 'page_break' } // merge of https://github.com/eKoopmans/html2pdf.js/pull/261
+    // merge of https://github.com/eKoopmans/html2pdf.js/pull/261
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'], elementType: 'tr', className: 'page_break', 
+        // Custom porabo
+        beforePageBreak: function() { console.log("I can modify the container before the pagebreak computation.")}
+    } 
 });
 
 // No modes, only explicit elements.

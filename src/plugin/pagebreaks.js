@@ -33,8 +33,8 @@ Worker.template.opt.pagebreak = {
   mode: ['css', 'legacy'],
   before: [],
   after: [],
-  // https://github.com/eKoopmans/html2pdf.js/pull/260
   avoid: [],
+  // https://github.com/eKoopmans/html2pdf.js/pull/260
   elementType: 'div',  //default element to create
   className: '',       //by default no class,
   // Custom porabo
@@ -51,8 +51,7 @@ Worker.prototype.toContainer = function toContainer() {
       this.opt.pagebreak.beforePageBreak();
     }
 
-    // https://github.com/eKoopmans/html2pdf.js/pull/170
-    var pxPageHeight = this.opt['html2canvas'] && this.opt['html2canvas']['width'] ? this.opt['html2canvas']['width'] * this.prop.pageSize.inner.ratio : this.prop.pageSize.inner.px.height;
+    var pxPageHeight = this.prop.pageSize.inner.px.heightExact;
 
     // Check all requested modes.
     var modeSrc = [].concat(this.opt.pagebreak.mode);
@@ -134,7 +133,7 @@ Worker.prototype.toContainer = function toContainer() {
               display: 'block',
               // https://github.com/eKoopmans/html2pdf.js/pull/447
               width: '100%',
-              height: pxPageHeight - (clientRect.top % pxPageHeight) + 'px'
+              height: Math.floor(pxPageHeight - (clientRect.top % pxPageHeight)) + 'px'
           }, className: self.opt.pagebreak.className}); //allow control of styling of added sections
         el.parentNode.insertBefore(pad, el);
       }
@@ -145,7 +144,7 @@ Worker.prototype.toContainer = function toContainer() {
           display: 'block',
             // https://github.com/eKoopmans/html2pdf.js/pull/447
             width: '100%',
-          height: pxPageHeight - (clientRect.bottom % pxPageHeight) + 'px'
+          height: Math.floor(pxPageHeight - (clientRect.bottom % pxPageHeight)) + 'px'
         }});
         el.parentNode.insertBefore(pad, el.nextSibling);
       }

@@ -1,6 +1,6 @@
 /**
  * html2pdf.js v0.9.3
- * Copyright (c) 2021 Erik Koopmans
+ * Copyright (c) 2022 Erik Koopmans
  * Released under the MIT License.
  */
 'use strict';
@@ -119,7 +119,10 @@ var unitConvert = function unitConvert(obj, k) {
 
 // Convert units to px using the conversion value 'k' from jsPDF.
 var toPx = function toPx(val, k) {
-  return Math.floor(val * k / 72 * 96);
+  var floor = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  var px = val * k / 72 * 96;
+  return floor ? Math.floor(px) : px;
 };
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -1686,8 +1689,10 @@ Worker.prototype.setPageSize = function setPageSize(pageSize) {
         height: pageSize.height - this.opt.margin[0] - this.opt.margin[2]
       };
       pageSize.inner.px = {
-        width: toPx(pageSize.inner.width, pageSize.k),
-        height: toPx(pageSize.inner.height, pageSize.k)
+        width: toPx(pageSize.inner.width, pageSize.k, true),
+        height: toPx(pageSize.inner.height, pageSize.k, true),
+        widthExact: toPx(pageSize.inner.width, pageSize.k, false),
+        heightExact: toPx(pageSize.inner.height, pageSize.k, false)
       };
       pageSize.inner.ratio = pageSize.inner.height / pageSize.inner.width;
     }
@@ -1933,14 +1938,25 @@ Worker.template.opt.pagebreak = {
   mode: ['css', 'legacy'],
   before: [],
   after: [],
-  avoid: []
+  avoid: [],
+  // https://github.com/eKoopmans/html2pdf.js/pull/260
+  elementType: 'div', //default element to create
+  className: '', //by default no class,
+  // Custom porabo
+  beforePageBreak: null
 };
 
 Worker.prototype.toContainer = function toContainer() {
   return orig.toContainer.call(this).then(function toContainer_pagebreak() {
     // Setup root element and inner page height.
     var root = this.prop.container;
-    var pxPageHeight = this.prop.pageSize.inner.px.height;
+
+    // Custom porabo
+    if (!!this.opt.pagebreak.beforePageBreak) {
+      this.opt.pagebreak.beforePageBreak();
+    }
+
+    var pxPageHeight = this.prop.pageSize.inner.px.heightExact;
 
     // Check all requested modes.
     var modeSrc = [].concat(this.opt.pagebreak.mode);
@@ -2012,11 +2028,17 @@ Worker.prototype.toContainer = function toContainer() {
       }
 
       // Before: Create a padding div to push the element to the next page.
+      // https://github.com/eKoopmans/html2pdf.js/pull/260/files (slightly adjusted)
+      // allow for creating any type of element e.g. 'tr'
+      // this is useful for tables and other cases where a 'div' will ruin the styling and cannot be handled by simply using the div selector as thats too broad.
       if (rules.before) {
-        var pad = createElement('div', { style: {
+        var pad = createElement(self.opt.pagebreak.elementType || "div", {
+          style: {
             display: 'block',
-            height: pxPageHeight - clientRect.top % pxPageHeight + 'px'
-          } });
+            // https://github.com/eKoopmans/html2pdf.js/pull/447
+            width: '100%',
+            height: Math.floor(pxPageHeight - clientRect.top % pxPageHeight) + 'px'
+          }, className: self.opt.pagebreak.className }); //allow control of styling of added sections
         el.parentNode.insertBefore(pad, el);
       }
 
@@ -2024,7 +2046,9 @@ Worker.prototype.toContainer = function toContainer() {
       if (rules.after) {
         var pad = createElement('div', { style: {
             display: 'block',
-            height: pxPageHeight - clientRect.bottom % pxPageHeight + 'px'
+            // https://github.com/eKoopmans/html2pdf.js/pull/447
+            width: '100%',
+            height: Math.floor(pxPageHeight - clientRect.bottom % pxPageHeight) + 'px'
           } });
         el.parentNode.insertBefore(pad, el.nextSibling);
       }

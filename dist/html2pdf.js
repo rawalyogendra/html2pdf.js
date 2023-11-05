@@ -1,6 +1,6 @@
 /*!
  * html2pdf.js v0.10.1
- * Copyright (c) 2021 Erik Koopmans
+ * Copyright (c) 2023 Erik Koopmans
  * Released under the MIT License.
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -341,8 +341,9 @@ _worker_js__WEBPACK_IMPORTED_MODULE_5__.default.template.opt.pagebreak = {
 _worker_js__WEBPACK_IMPORTED_MODULE_5__.default.prototype.toContainer = function toContainer() {
   return orig.toContainer.call(this).then(function toContainer_pagebreak() {
     // Setup root element and inner page height.
-    var root = this.prop.container;
-    var pxPageHeight = this.prop.pageSize.inner.px.height; // Check all requested modes.
+    var root = this.prop.container; // avoid rounding errors by using the exact height in px
+
+    var pxPageHeight = this.prop.pageSize.inner.px.heightExact; // Check all requested modes.
 
     var modeSrc = [].concat(this.opt.pagebreak.mode);
     var mode = {
@@ -411,7 +412,7 @@ _worker_js__WEBPACK_IMPORTED_MODULE_5__.default.prototype.toContainer = function
         var pad = (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.createElement)('div', {
           style: {
             display: 'block',
-            height: pxPageHeight - clientRect.top % pxPageHeight + 'px'
+            height: Math.floor(pxPageHeight - clientRect.top % pxPageHeight) + 'px'
           }
         });
         el.parentNode.insertBefore(pad, el);
@@ -422,7 +423,7 @@ _worker_js__WEBPACK_IMPORTED_MODULE_5__.default.prototype.toContainer = function
         var pad = (0,_utils_js__WEBPACK_IMPORTED_MODULE_6__.createElement)('div', {
           style: {
             display: 'block',
-            height: pxPageHeight - clientRect.bottom % pxPageHeight + 'px'
+            height: Math.floor(pxPageHeight - clientRect.bottom % pxPageHeight) + 'px'
           }
         });
         el.parentNode.insertBefore(pad, el.nextSibling);
@@ -548,7 +549,9 @@ var unitConvert = function unitConvert(obj, k) {
 }; // Convert units to px using the conversion value 'k' from jsPDF.
 
 var toPx = function toPx(val, k) {
-  return Math.floor(val * k / 72 * 96);
+  var floor = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+  var px = val * k / 72 * 96;
+  return floor ? Math.floor(px) : px;
 };
 
 /***/ }),
@@ -998,8 +1001,10 @@ Worker.prototype.setPageSize = function setPageSize(pageSize) {
         height: pageSize.height - this.opt.margin[0] - this.opt.margin[2]
       };
       pageSize.inner.px = {
-        width: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.width, pageSize.k),
-        height: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.height, pageSize.k)
+        width: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.width, pageSize.k, true),
+        height: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.height, pageSize.k, true),
+        widthExact: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.width, pageSize.k, false),
+        heightExact: (0,_utils_js__WEBPACK_IMPORTED_MODULE_10__.toPx)(pageSize.inner.height, pageSize.k, false)
       };
       pageSize.inner.ratio = pageSize.inner.height / pageSize.inner.width;
     } // Attach pageSize to this.
